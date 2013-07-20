@@ -302,7 +302,7 @@ module Bones
       end
 
       def request(method, params)
-        twoway(Protocol::Request.new(pool.method_id, method, params))
+        twoway(Protocol::Request.new(pool.message_id, method, params))
       end
 
       def synchronize

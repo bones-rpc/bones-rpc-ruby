@@ -84,7 +84,7 @@ module Bones
           @mutex = Mutex.new
           @resource = ConditionVariable.new
           @pinned = {}
-          @method_id = 0
+          @message_id = 0
           @synchronize_id = 0
           @unpinned = Queue.new(max_size) do
             Connection.new(self)
@@ -104,9 +104,13 @@ module Bones
           @max_size ||= (options[:pool_size] || POOL_SIZE)
         end
 
-        def method_id
+        def message_id
           mutex.synchronize do
-            @method_id += 1
+            @message_id += 1
+            if @message_id >= 1 << 31
+              @message_id = 0
+            end
+            @message_id
           end
         end
 
@@ -153,6 +157,10 @@ module Bones
         def synchronize_id
           mutex.synchronize do
             @synchronize_id += 1
+            if @synchronize_id >= (1 << 32) - 1
+              @synchronize_id = 0
+            end
+            @synchronize_id
           end
         end
 
