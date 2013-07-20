@@ -47,7 +47,7 @@ module Bones
       # @since 2.0.0
       WRITE_OPTIONS = [ "w", "j", "fsync", "wtimeout" ].freeze
 
-      # The mappings from read preferences in the URI to Moped's.
+      # The mappings from read preferences in the URI to Bones::RPC's.
       #
       # @since 2.0.0
       READ_MAPPINGS = {
@@ -101,7 +101,7 @@ module Bones
       # Create the new uri from the provided string.
       #
       # @example Create the new uri.
-      #   MongoUri.new(uri)
+      #   Bones::RPC::Uri.new(uri)
       #
       # @param [ String ] string The uri string.
       #
@@ -114,7 +114,7 @@ module Bones
       # Raise a human readable error when improper URI provided
       #
       # @example Raise error and provide guidance on invalid URI
-      #   MongoUri.invalid!(uri)
+      #   Bones::RPC::Uri.invalid!(uri)
       #
       # @param [ String ] Invalid string
       #
@@ -129,12 +129,10 @@ module Bones
       # @example Get the options
       #   uri.options
       #
-      # @note The options provided in the URI string must match the MongoDB
+      # @note The options provided in the URI string must match the Bones::RPC
       #   specification.
       #
       # @return [ Hash ] Options hash usable by Moped
-      #
-      # @see http://docs.mongodb.org/manual/reference/connection-string/#connections-connection-options
       #
       # @since 1.3.0
       def options
@@ -166,7 +164,7 @@ module Bones
         @password ||= match[4]
       end
 
-      # Get the uri as a Mongoid friendly configuration hash.
+      # Get the uri as a Bones::RPC friendly configuration hash.
       #
       # @example Get the uri as a hash.
       #   uri.to_hash
@@ -182,15 +180,15 @@ module Bones
         config
       end
 
-      # Create Moped usable arguments
+      # Create Bones::RPC usable arguments
       #
-      # @example Get the moped args
-      #   uri.moped_arguments
+      # @example Get the bones_rpc args
+      #   uri.bones_rpc_arguments
       #
-      # @return [ Array ] Array of arguments usable by Moped
+      # @return [ Array ] Array of arguments usable by bones_rpc
       #
       # @since 1.3.0
-      def moped_arguments
+      def bones_rpc_arguments
         [ hosts, options ]
       end
 

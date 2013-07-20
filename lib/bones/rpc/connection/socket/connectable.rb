@@ -133,9 +133,9 @@ module Bones
           #     socket.read(128)
           #   end
           #
-          # @raise [ Moped::Errors::ConnectionFailure ] If a system call error or
+          # @raise [ Bones::RPC::Errors::ConnectionFailure ] If a system call error or
           #   IOError occured which can be retried.
-          # @raise [ Moped::Errors::Unrecoverable ] If a system call error occured
+          # @raise [ Bones::RPC::Errors::Unrecoverable ] If a system call error occured
           #   which cannot be retried and should be re-raised.
           #
           # @return [ Object ] The result of the yield.

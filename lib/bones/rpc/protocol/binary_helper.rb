@@ -9,7 +9,7 @@ module Bones
       #
       # @example
       #
-      #   class KillCursors < Moped::Protocol::Message
+      #   class KillCursors < Bones::RPC::Protocol::Message
       #     # header fields
       #     int32 :length
       #     int32 :request_id

@@ -7,7 +7,7 @@ require 'bones/rpc/context'
 module Bones
   module RPC
 
-    # A session in moped is root for all interactions with a MongoDB server or
+    # A session in bones_rpc is root for all interactions with a Bones::RPC server or
     # replica set.
     #
     # It can talk to a single default database, or dynamically speak to multiple
@@ -15,7 +15,7 @@ module Bones
     #
     # @example Single database (console-style)
     #   session = Bones::RPC::Session.new(["127.0.0.1:27017"])
-    #   session.use(:moped)
+    #   session.use(:bones_rpc)
     #   session[:users].find.one
     #
     # @example Multiple databases
@@ -171,16 +171,16 @@ module Bones
         # Create a new session from a URI.
         #
         # @example Initialize a new session.
-        #   Session.connect("mongodb://localhost:27017/my_db")
+        #   Session.connect("bones-rpc://localhost:27017/my_db")
         #
-        # @param [ String ] MongoDB URI formatted string.
+        # @param [ String ] Bones::RPC URI formatted string.
         #
         # @return [ Session ] The new session.
         #
         # @since 3.0.0
         def connect(uri)
           uri = Uri.new(uri)
-          session = new(*uri.moped_arguments)
+          session = new(*uri.bones_rpc_arguments)
           session
         end
       end
