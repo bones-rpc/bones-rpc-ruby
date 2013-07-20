@@ -1,12 +1,12 @@
-# Bones::Rpc::Ruby
+# Bones::RPC
 
-TODO: Write a gem description
+Bones::RPC client for ruby
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-    gem 'bones-rpc-ruby'
+    gem 'bones-rpc'
 
 And then execute:
 
@@ -14,7 +14,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install bones-rpc-ruby
+    $ gem install bones-rpc
 
 ## Usage
 

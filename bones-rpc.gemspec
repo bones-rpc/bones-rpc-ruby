@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Bones::RPC::VERSION
   spec.authors       = ["Andrew Bennett"]
   spec.email         = ["andrew@delorum.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
+  spec.description   = %q{Bones::RPC client for ruby}
+  spec.summary       = %q{Bones::RPC client for ruby}
   spec.homepage      = ""
   spec.license       = "MIT"
 
