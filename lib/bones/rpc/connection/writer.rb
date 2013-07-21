@@ -43,7 +43,6 @@ module Bones
 
         def shutdown
           if @reader && @reader.alive?
-            puts "READER IS ALIVE?: #{@reader.inspect}"
             @reader.unlink
             @reader.async.terminate
           end
@@ -51,7 +50,6 @@ module Bones
         end
 
         def reader_died(actor, reason)
-          puts "reader died: #{actor.inspect}\nreason: #{reason.inspect}"
           Loggable.warn("  BONES-RPC:", "Writer terminating", "n/a")
           @reader = nil
           terminate
