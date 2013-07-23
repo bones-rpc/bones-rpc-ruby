@@ -29,7 +29,7 @@ module Bones
           begin
             yield if block_given?
           rescue Exception => e
-            node.down!
+            node.down
             raise(e)
           end
         end

@@ -7,11 +7,10 @@ module Bones
 
         execute_block_on_receiver :initialize
 
-        def initialize(connection, socket)
+        def initialize(connection, socket, adapter)
           @connection = connection
           @socket = socket
-          @adapter = connection.adapter
-          @node = @connection.pool.node
+          @adapter = adapter
           @buffer = ""
           async.read
         end
@@ -36,12 +35,12 @@ module Bones
             async.parse @socket.readpartial(4096)
           end
         rescue EOFError, Errors::ConnectionFailure => e
-          Loggable.warn("  BONES-RPC:", "Reader terminating: #{e.message}", "n/a")
+          Loggable.warn("  BONES-RPC:", "#{@connection.node.address.resolved} Reader terminating: #{e.message}", "n/a")
           terminate
         end
 
         def send(message)
-          @node.on_message(message, @socket)
+          @connection.node.handle_message(message)
         end
 
       end

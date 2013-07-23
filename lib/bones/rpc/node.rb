@@ -1,11 +1,10 @@
 # encoding: utf-8
 require 'bones/rpc/address'
 require 'bones/rpc/connection'
-require 'bones/rpc/executable'
 require 'bones/rpc/failover'
 require 'bones/rpc/future'
 require 'bones/rpc/instrumentable'
-require 'bones/rpc/responsive'
+require 'bones/rpc/node/registry'
 
 module Bones
   module RPC
@@ -14,9 +13,8 @@ module Bones
     #
     # @since 1.0.0
     class Node
-      include Executable
+      include Celluloid
       include Instrumentable
-      include Responsive
 
       # @!attribute address
       #   @return [ Address ] The address.
@@ -28,7 +26,7 @@ module Bones
       #   @return [ Hash ] The node options.
       # @!attribute refreshed_at
       #   @return [ Time ] The last time the node did a refresh.
-      attr_reader :address, :down_at, :latency, :options, :refreshed_at
+      attr_reader :cluster, :address, :down_at, :latency, :refreshed_at
 
       # Is this node equal to another?
       #
@@ -50,13 +48,12 @@ module Bones
         @adapter ||= Adapter.get(options[:adapter] || :msgpack)
       end
 
-      def attach(socket, operation, future)
-        operation.store(self, socket, future)
+      def attach(channel, id, future)
+        @registry.set(channel, id, future)
       end
 
       def cleanup_socket(socket)
-        @refreshed_at = nil
-        futures_flush(socket, Errors::ConnectionFailure.new("Socket closed"))
+        @registry.flush
       end
 
       # Connect the node on the underlying connection.
@@ -71,7 +68,7 @@ module Bones
       # @since 2.0.0
       def connect
         start = Time.now
-        connection{ |conn| conn.connect }
+        @connection.connect
         @latency = Time.now - start
         @down_at = nil
         true
@@ -86,21 +83,11 @@ module Bones
       #
       # @since 2.0.0
       def connected?
-        connection{ |conn| conn.alive? }
+        @connection.alive?
       end
 
-      # Get the underlying connection for the node.
-      #
-      # @example Get the node's connection.
-      #   node.connection
-      #
-      # @return [ Connection ] The connection.
-      #
-      # @since 2.0.0
-      def connection
-        pool.with_connection do |conn|
-          yield(conn)
-        end
+      def detach(channel, id)
+        @registry.get(channel, id)
       end
 
       # Force the node to disconnect from the server.
@@ -112,7 +99,7 @@ module Bones
       #
       # @since 1.2.0
       def disconnect
-        connection{ |conn| conn.disconnect }
+        @connection.disconnect
         true
       end
 
@@ -125,18 +112,18 @@ module Bones
       #
       # @since 1.0.0
       def down?
-        @down_at
+        !!@down_at
       end
 
       # Mark the node as down.
       #
       # @example Mark the node as down.
-      #   node.down!
+      #   node.down
       #
       # @return [ nil ] Nothing.
       #
       # @since 2.0.0
-      def down!
+      def down
         @down_at = Time.new
         @latency = nil
         disconnect if connected?
@@ -156,50 +143,50 @@ module Bones
       #
       # @since 1.0.0
       def ensure_connected(&block)
-        return yield if executing?(:connection)
-        execute(:connection) do
-          begin
-            connect unless connected?
-            yield(self)
-          rescue Exception => e
-            Failover.get(e).execute(e, self, &block)
+        begin
+          connect unless connected?
+          yield(current_actor)
+        rescue Exception => e
+          Failover.get(e).execute(e, current_actor, &block)
+        end
+      end
+
+      def handle_message(message)
+        logging(message) do
+          if future = message.get(current_actor)
+            message.signal(future)
           end
         end
       end
 
-      # Get the hash identifier for the node.
-      #
-      # @example Get the hash identifier.
-      #   node.hash
-      #
-      # @return [ Integer ] The hash identifier.
-      #
-      # @since 1.0.0
-      def hash
-        id.hash
+      def handle_socket(socket)
+        @cluster.handle_socket(current_actor, socket)
       end
 
-      def id
-        "#{address.resolved}"
-      end
-
-      # Create the new node.
-      #
-      # @example Create the new node.
-      #   Node.new("127.0.0.1:27017")
-      #
-      # @param [ String ] address The location of the server node.
-      # @param [ Hash ] options Additional options for the node (ssl)
-      #
-      # @since 1.0.0
-      def initialize(address, options = {})
+      def initialize(cluster, address)
+        @cluster = cluster
         @address = address
-        @options = options
+        @connection = Connection.new(current_actor)
         @down_at = nil
         @refreshed_at = nil
         @latency = nil
-        @instrumenter = options[:instrumenter] || Instrumentable::Log
+        @instrumenter = @cluster.options[:instrumenter] || Instrumentable::Log
+        @registry = Node::Registry.new
+        @request_id = 0
+        @synack_id = 0
         @address.resolve(self)
+      end
+
+      # Get the node as a nice formatted string.
+      #
+      # @example Inspect the node.
+      #   node.inspect
+      #
+      # @return [ String ] The string inspection.
+      #
+      # @since 1.0.0
+      def inspect
+        "<#{self.class.name} resolved_address=#{address.resolved.inspect}>"
       end
 
       # Does the node need to be refreshed?
@@ -217,59 +204,11 @@ module Bones
       end
 
       def notify(method, params)
-        oneway(Protocol::Notify.new(method, params))
+        without_future(Protocol::Notify.new(method, params))
       end
 
-      def on_connect(socket)
-      end
-
-      def on_message(message, socket)
-        logging([message]) do
-          if future = message.get(self, socket)
-            message.signal(future)
-          end
-        end
-      end
-
-      # Execute a pipeline of commands, for example a safe mode persist.
-      #
-      # @example Execute a pipeline.
-      #   node.pipeline do
-      #     #...
-      #   end
-      #
-      # @return [ nil ] nil.
-      #
-      # @since 1.0.0
-      # @todo: Remove with piggbacked gle.
-      def pipeline
-        execute(:pipeline) do
-          yield(self)
-        end
-        flush unless executing?(:pipeline)
-      end
-
-      # Processes the provided operation on this node, and will execute the
-      # callback when the operation is sent to the database.
-      #
-      # @example Process a read operation.
-      #   node.process(query) do |reply|
-      #     return reply.documents
-      #   end
-      #
-      # @param [ Message ] operation The database operation.
-      # @param [ Proc ] callback The callback to run on operation completion.
-      #
-      # @return [ Object ] The result of the callback.
-      #
-      # @since 1.0.0
-      def process(operation, future=nil)
-        if executing?(:pipeline)
-          queue.push([operation, future])
-        else
-          flush([[operation, future]])
-        end
-        return future
+      def options
+        cluster.options
       end
 
       # Refresh information about the node, such as it's status in the replica
@@ -293,20 +232,20 @@ module Bones
             if synchronize.value(timeout)
               nil
             else
-              down!
+              down
             end
           rescue Timeout::Error
-            down!
+            down
           end
         end
       end
 
       def request(method, params)
-        twoway(Protocol::Request.new(pool.message_id, method, params))
+        with_future(Protocol::Request.new(next_request_id, method, params))
       end
 
       def synchronize
-        twoway(Protocol::Synchronize.new(pool.synchronize_id, adapter))
+        with_future(Protocol::Synchronize.new(next_synack_id, adapter))
       end
 
       # Get the timeout, in seconds, for this node.
@@ -321,44 +260,7 @@ module Bones
         @timeout ||= (options[:timeout] || 5)
       end
 
-      # Get the node as a nice formatted string.
-      #
-      # @example Inspect the node.
-      #   node.inspect
-      #
-      # @return [ String ] The string inspection.
-      #
-      # @since 1.0.0
-      def inspect
-        "<#{self.class.name} resolved_address=#{address.resolved.inspect}>"
-      end
-
       private
-
-      # Flush the node operations to the database.
-      #
-      # @api private
-      #
-      # @example Flush the operations.
-      #   node.flush([ command ])
-      #
-      # @param [ Array<Message> ] ops The operations to flush.
-      #
-      # @return [ Object ] The result of the operations.
-      #
-      # @since 2.0.0
-      def flush(ops = queue)
-        operations, futures = ops.transpose
-        logging(operations) do
-          ensure_connected do
-            connection do |conn|
-              conn.write(ops.dup)
-            end
-          end
-        end
-      ensure
-        ops.clear
-      end
 
       # Yield the block with logging.
       #
@@ -374,46 +276,45 @@ module Bones
       # @return [ Object ] The result of the yield.
       #
       # @since 2.0.0
-      def logging(operations)
-        instrument(TOPIC, prefix: "  BONES-RPC: #{address.resolved}", ops: operations) do
+      def logging(message)
+        instrument(TOPIC, prefix: "  BONES-RPC: #{address.resolved}", ops: [message]) do
           yield if block_given?
         end
       end
 
-      def oneway(operation)
-        process(operation)
+      def next_request_id
+        @request_id += 1
+        if @request_id >= 1 << 31
+          @request_id = 0
+        end
+        @request_id
       end
 
-      # Get the connection pool for the node.
-      #
-      # @api private
-      #
-      # @example Get the connection pool.
-      #   node.pool
-      #
-      # @return [ Connection::Pool ] The connection pool.
-      #
-      # @since 2.0.0
-      def pool
-        @pool ||= Connection::Manager.pool(self)
+      def next_synack_id
+        @synack_id += 1
+        if @synack_id >= (1 << 32) - 1
+          @synack_id = 0
+        end
+        @synack_id
       end
 
-      def twoway(operation)
-        process(operation, Bones::RPC::Future.new)
+      def process(message, future = nil)
+        logging(message) do
+          ensure_connected do
+            @connection.write([[message, future]])
+          end
+        end
+        return future
+      rescue Exception => e
+        abort(e)
       end
 
-      # Get the queue of operations.
-      #
-      # @api private
-      #
-      # @example Get the operation queue.
-      #   node.queue
-      #
-      # @return [ Array<Message> ] The queue of operations.
-      #
-      # @since 2.0.0
-      def queue
-        stack(:pipelined_operations)
+      def with_future(message)
+        process(message, Future.new)
+      end
+
+      def without_future(message)
+        process(message, nil)
       end
     end
   end

@@ -58,8 +58,8 @@ module Bones
           new(id, adapter)
         end
 
-        def store(node, socket, future)
-          node.future_store(socket, :synack, id, future)
+        def attach(node, future)
+          node.attach(:synack, id, future)
         end
 
         Protocol.register_ext_head self, 0

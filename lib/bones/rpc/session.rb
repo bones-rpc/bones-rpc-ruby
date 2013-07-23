@@ -64,6 +64,10 @@ module Bones
         cluster.disconnect
       end
 
+      def handle_socket(node, socket)
+        @callback.call(node, socket) if @callback
+      end
+
       # Provide a string inspection for the session.
       #
       # @example Inspect the session.
@@ -129,20 +133,15 @@ module Bones
       # @see Above options validations for allowed values in the options hash.
       #
       # @since 1.0.0
-      def initialize(seeds, options = {})
+      def initialize(seeds, options = {}, &callback)
         validate_strict(options)
         @options = options
-        @cluster = Cluster.new(self, seeds, options)
+        @callback = callback
+        @cluster = Cluster.new(self, seeds)
       end
 
       def notify(method, *params)
         context.notify(method, params)
-      end
-
-      def on_connect(socket)
-      end
-
-      def on_message(message)
       end
 
       # Get the read preference for the session. Will default to primary if none
@@ -178,9 +177,9 @@ module Bones
         # @return [ Session ] The new session.
         #
         # @since 3.0.0
-        def connect(uri)
+        def connect(uri, &block)
           uri = Uri.new(uri)
-          session = new(*uri.bones_rpc_arguments)
+          session = new(*uri.bones_rpc_arguments, &block)
           session
         end
       end

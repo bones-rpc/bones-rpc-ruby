@@ -44,8 +44,8 @@ module Bones
           message
         end
 
-        def get(node, socket)
-          node.future_get(socket, :request, id)
+        def get(node)
+          node.detach(:request, id)
         end
 
         def signal(future)

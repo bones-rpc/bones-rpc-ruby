@@ -31,7 +31,7 @@ module Bones
       #   @return [ Array<Node> ] The node peers.
       # @!attribute seeds
       #   @return [ Array<Node> ] The seed nodes.
-      attr_reader :session, :options, :peers, :seeds
+      attr_reader :session, :peers, :seeds
 
       # Disconnects all nodes in the cluster. This should only be used in cases
       # where you know you're not going to use the cluster on the thread anymore
@@ -57,6 +57,10 @@ module Bones
         @down_interval ||= options[:down_interval] || DOWN_INTERVAL
       end
 
+      def handle_socket(node, socket)
+        session.handle_socket(node, socket)
+      end
+
       # Initialize the new cluster.
       #
       # @example Initialize the cluster.
@@ -72,15 +76,10 @@ module Bones
       #   operation to timeout. (5)
       #
       # @since 1.0.0
-      def initialize(session, hosts, options)
+      def initialize(session, hosts)
         @session = session
-        @seeds = hosts.map do |host|
-          address = Address.new(host)
-          address.resolve! rescue nil
-          Connection::Manager.node(address, options)
-        end
+        @seeds = hosts.map { |host| Node.new(self, Address.new(host)) }
         @peers = []
-        @options = options
       end
 
       # Provide a pretty string for cluster inspection.
@@ -133,12 +132,12 @@ module Bones
         available.reject{ |node| node.down? }
       end
 
-      def on_connect(socket)
-        session.on_connect(socket)
+      def options
+        session.options
       end
 
-      def on_message(message)
-        session.on_message(message)
+      def pool_size
+        options[:pool_size] || 5
       end
 
       # Refreshes information for each of the nodes provided. The node list

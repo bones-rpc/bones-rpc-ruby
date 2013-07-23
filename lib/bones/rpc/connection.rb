@@ -1,16 +1,12 @@
 # encoding: utf-8
-require 'bones/rpc/connection/manager'
-require 'bones/rpc/connection/pool'
-require 'bones/rpc/connection/queue'
 require 'bones/rpc/connection/reader'
-require 'bones/rpc/connection/reaper'
 require 'bones/rpc/connection/socket'
 require 'bones/rpc/connection/writer'
 
 module Bones
   module RPC
 
-    # This class contains behaviour of database socket connections.
+    # This class contains behaviour of Bones::RPC socket connections.
     #
     # @since 2.0.0
     class Connection
@@ -20,21 +16,7 @@ module Bones
       # @since 2.0.0
       TIMEOUT = 5
 
-      # @!attribute host
-      #   @return [ String ] The ip address of the host.
-      # @!attribute options
-      #   @return [ Hash ] The connection options.
-      # @!attribute port
-      #   @return [ String ] The port the connection connects on.
-      # @!attribute timeout
-      #   @return [ Integer ] The timeout in seconds.
-      # @!attribute last_use
-      #   @return [ Time ] The time the connection was last checked out.
-      attr_reader :pool, :last_use
-
-      def adapter
-        @adapter ||= Adapter.get(options[:adapter] || :msgpack)
-      end
+      attr_reader :node, :socket
 
       # Is the connection alive?
       #
@@ -45,13 +27,15 @@ module Bones
       #
       # @since 1.0.0
       def alive?
-        connected? ? @sock.alive? : false
+        connected? ? @socket.alive? : false
       end
 
       def cleanup_socket(socket)
-        disconnect
-        @writer = nil
-        pool.node.cleanup_socket(socket)
+        if @writer
+          @writer.async.terminate if @writer.alive?
+          @writer = nil
+        end
+        @node.cleanup_socket(socket)
       end
 
       # Connect to the server defined by @host, @port without timeout @timeout.
@@ -63,15 +47,18 @@ module Bones
       #
       # @since 1.0.0
       def connect
-        (@writer.async.terminate rescue nil) if @writer
-        @sock = if !!options[:ssl]
+        if @writer
+          @writer.terminate
+          @writer = nil
+        end
+        @socket = if !!options[:ssl]
           Socket::SSL.connect(host, port, timeout)
         else
           Socket::TCP.connect(host, port, timeout)
         end
-        @writer = Writer.new(self, @sock)
-        pool.node.on_connect(@sock)
-        @sock
+        handle_socket(@socket)
+        writer
+        return true
       end
 
       # Is the connection connected?
@@ -83,7 +70,7 @@ module Bones
       #
       # @since 1.0.0
       def connected?
-        !!@sock
+        !!@socket
       end
 
       # Disconnect from the server.
@@ -95,87 +82,44 @@ module Bones
       #
       # @since 1.0.0
       def disconnect
-        @sock.close
+        @socket.close
       rescue
       ensure
-        @sock = nil
+        @socket = nil
       end
 
-      # Initialize the connection.
-      #
-      # @example Initialize the connection.
-      #   Connection.new("localhost", 27017, 5)
-      #
-      # @param [ String ] host The host to connect to.
-      # @param [ Integer ] post The server port.
-      # @param [ Integer ] timeout The connection timeout.
-      # @param [ Hash ] options Options for the connection.
-      #
-      # @option options [ Boolean ] :ssl Connect using SSL
-      # @since 1.0.0
-      # def initialize(host, port, timeout, options = {})
-      def initialize(pool)
-        @pool = pool
-        @sock = nil
-        @last_use = nil
-        @request_id = 0
-      end
-
-      # Expiring a connection means returning it to the connection pool.
-      #
-      # @example Expire the connection.
-      #   connection.expire
-      #
-      # @return [ nil ] nil.
-      #
-      # @since 2.0.0
-      def expire
-        @last_use = nil
-      end
-
-      # An expired connection is not currently being used.
-      #
-      # @example Is the connection expired?
-      #   connection.expired?
-      #
-      # @return [ true, false ] If the connection is expired.
-      #
-      # @since 2.0.0
-      def expired?
-        @last_use.nil?
+      def handle_socket(socket)
+        @node.handle_socket(socket)
       end
 
       def host
-        pool.host
+        node.address.ip
       end
 
-      # A leased connection is currently checkout out from the connection pool.
-      #
-      # @example Lease the connection.
-      #   connection.lease
-      #
-      # @return [ Time ] The current time of leasing.
-      #
-      # @since 2.0.0
-      def lease
-        @last_use = Time.now
+      def initialize(node)
+        @node = node
+        @socket = nil
+      end
+
+      def inspect
+        "<#{self.class} \"#{node.address.resolved}\">"
       end
 
       def options
-        pool.options
+        node.options
       end
 
       def port
-        pool.port
+        node.address.port
       end
 
       def timeout
-        pool.options[:timeout] || Connection::TIMEOUT
+        options[:timeout] || Connection::TIMEOUT
       end
 
       def write(operations)
         with_connection do |socket|
-          @writer.async.write(operations)
+          writer.write(operations)
         end
       end
 
@@ -195,8 +139,12 @@ module Bones
       #
       # @since 1.3.0
       def with_connection
-        connect if @sock.nil? || !@sock.alive?
-        yield @sock
+        connect if @socket.nil? || !@socket.alive?
+        yield @socket
+      end
+
+      def writer
+        @writer ||= Writer.new(self, @socket, node.adapter)
       end
     end
   end

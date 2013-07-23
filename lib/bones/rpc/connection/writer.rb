@@ -9,36 +9,26 @@ module Bones
         finalizer :shutdown
         trap_exit :reader_died
 
-        def initialize(connection, socket)
+        def initialize(connection, socket, adapter)
           @connection = connection
           @socket = socket
-          @node = connection.pool.node
-          @adapter = connection.adapter
+          @adapter = adapter
+          @resolved = @connection.node.address.resolved
           @buffer = ""
-          @reader = Reader.new_link(@connection, @socket)
-        end
-
-        def flush
-          if not @buffer.empty?
-            @socket.write(@buffer)
-            @buffer = ""
-          end
-        rescue EOFError, Errors::ConnectionFailure => e
-          Loggable.warn("  BONES-RPC:", "Writer terminating: #{e.message}", "n/a")
-          terminate
+          @reader = Reader.new_link(@connection, @socket, @adapter)
         end
 
         def write(operations)
-          @timer.cancel if @timer
-          operations.each do |operation, future|
-            operation.serialize(@buffer, @adapter)
-            @node.attach(@socket, operation, future) if future
+          operations.each do |message, future|
+            message.serialize(@buffer, @adapter)
+            message.attach(@connection.node, future) if future
           end
-          if @buffer.bytesize > 4096
-            flush
-          else
-            @timer = after(0.1) { flush }
-          end
+          @socket.write(@buffer)
+          @buffer = ""
+          return true
+        rescue EOFError, Errors::ConnectionFailure => e
+          Loggable.warn("  BONES-RPC:", "#{@resolved} Writer terminating: #{e.message}", "n/a")
+          terminate
         end
 
         def shutdown
@@ -50,7 +40,7 @@ module Bones
         end
 
         def reader_died(actor, reason)
-          Loggable.warn("  BONES-RPC:", "Writer terminating", "n/a")
+          Loggable.warn("  BONES-RPC:", "#{@resolved} Writer terminating: #{reason}", "n/a")
           @reader = nil
           terminate
         end

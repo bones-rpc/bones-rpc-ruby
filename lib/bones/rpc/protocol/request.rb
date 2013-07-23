@@ -35,8 +35,8 @@ module Bones
           f.join(" ") % v
         end
 
-        def store(node, socket, future)
-          node.future_store(socket, :request, id, future)
+        def attach(node, future)
+          node.attach(:request, id, future)
         end
 
       end

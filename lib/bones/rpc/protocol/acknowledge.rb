@@ -66,8 +66,8 @@ module Bones
           new(id, ready)
         end
 
-        def get(node, socket)
-          node.future_get(socket, :synack, id)
+        def get(node)
+          node.detach(:synack, id)
         end
 
         def signal(future)

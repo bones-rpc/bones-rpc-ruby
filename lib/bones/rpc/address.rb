@@ -104,7 +104,7 @@ module Bones
           valid?
         rescue Resolv::ResolvError, SocketError => e
           node.instrument(Node::WARN, prefix: "  BONES-RPC:", message: "Could not resolve IP or UNIX path for: #{original}")
-          node.down! and false
+          node.down and false
         end
       end
 
