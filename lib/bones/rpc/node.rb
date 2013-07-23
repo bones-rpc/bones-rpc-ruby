@@ -159,10 +159,6 @@ module Bones
         end
       end
 
-      def handle_socket(socket)
-        @cluster.handle_socket(current_actor, socket)
-      end
-
       def initialize(cluster, address)
         @cluster = cluster
         @address = address
@@ -230,7 +226,7 @@ module Bones
           begin
             @refreshed_at = Time.now
             if synchronize.value(timeout)
-              nil
+              cluster.handle_refresh(current_actor)
             else
               down
             end

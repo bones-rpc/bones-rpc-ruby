@@ -57,8 +57,8 @@ module Bones
         @down_interval ||= options[:down_interval] || DOWN_INTERVAL
       end
 
-      def handle_socket(node, socket)
-        session.handle_socket(node, socket)
+      def handle_refresh(node)
+        session.handle_refresh(node)
       end
 
       # Initialize the new cluster.

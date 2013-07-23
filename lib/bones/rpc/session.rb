@@ -64,8 +64,8 @@ module Bones
         cluster.disconnect
       end
 
-      def handle_socket(node, socket)
-        @callback.call(node, socket) if @callback
+      def handle_refresh(node)
+        @callback.call(node) if @callback
       end
 
       # Provide a string inspection for the session.

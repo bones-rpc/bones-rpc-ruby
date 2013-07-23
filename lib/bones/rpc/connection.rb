@@ -56,7 +56,6 @@ module Bones
         else
           Socket::TCP.connect(host, port, timeout)
         end
-        handle_socket(@socket)
         writer
         return true
       end
@@ -86,10 +85,6 @@ module Bones
       rescue
       ensure
         @socket = nil
-      end
-
-      def handle_socket(socket)
-        @node.handle_socket(socket)
       end
 
       def host
