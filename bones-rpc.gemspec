@@ -18,8 +18,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "celluloid"
-  spec.add_dependency "celluloid-io"
+  spec.add_dependency "celluloid-io", ">= 0.14.0"
   spec.add_dependency "erlang-etf"
   spec.add_dependency "msgpack"
   spec.add_dependency "optionable"
