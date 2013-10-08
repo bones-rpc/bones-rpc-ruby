@@ -137,9 +137,9 @@ module Bones
       # @return The yielded block
       #
       # @since 0.0.1
-      def with_connection(&block)
+      def with_connection
         connect if @socket.nil? || !@socket.alive?
-        block.call(@socket)
+        yield @socket
       end
 
       def writer

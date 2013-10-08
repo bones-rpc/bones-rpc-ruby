@@ -228,10 +228,10 @@ module Bones
       #
       # @since 0.0.1
       def refresh
-        if address.resolve(self)
+        if address.resolve(current_actor)
           begin
             @refreshed_at = Time.now
-            if synchronize.value(timeout)
+            if synchronize.value(refresh_timeout)
               cluster.handle_refresh(current_actor)
             else
               down
@@ -240,6 +240,18 @@ module Bones
             down
           end
         end
+      end
+
+      # Get the timeout, in seconds, for this node.
+      #
+      # @example Get the timeout in seconds.
+      #   node.refresh_timeout
+      #
+      # @return [ Integer ] The configured timeout or the default of 5.
+      #
+      # @since 0.0.1
+      def refresh_timeout
+        @refresh_timeout ||= (options[:timeout] || 5)
       end
 
       def registry_empty?
@@ -252,18 +264,6 @@ module Bones
 
       def synchronize
         with_future(Protocol::Synchronize.new(next_synack_id, adapter))
-      end
-
-      # Get the timeout, in seconds, for this node.
-      #
-      # @example Get the timeout in seconds.
-      #   node.timeout
-      #
-      # @return [ Integer ] The configured timeout or the default of 5.
-      #
-      # @since 0.0.1
-      def timeout
-        @timeout ||= (options[:timeout] || 5)
       end
 
       private
