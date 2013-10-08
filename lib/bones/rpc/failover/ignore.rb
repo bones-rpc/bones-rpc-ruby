@@ -6,7 +6,7 @@ module Bones
       # Ignore is for the case when we get exceptions we deem are proper user
       # or datbase errors and should be re-raised.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       module Ignore
         extend self
 
@@ -21,7 +21,7 @@ module Bones
         #
         # @raise [ Exception ] The exception that was previously thrown.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def execute(exception, node)
           raise(exception)
         end

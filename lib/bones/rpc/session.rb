@@ -28,7 +28,7 @@ module Bones
     #   session = Bones::RPC::Session.new %w[127.0.0.1:27017],
     #   session.with(database: "admin").login("admin", "s3cr3t")
     #
-    # @since 1.0.0
+    # @since 0.0.1
     class Session
       include Optionable
 
@@ -38,13 +38,17 @@ module Bones
       #   @return [ Hash ] The configuration options.
       attr_reader :cluster, :options
 
+      def backend
+        @backend ||= Backend.get(options[:backend] || :synchronous).tap(&:setup)
+      end
+
       # Run +command+ on the current database.
       #
       # @param (see Bones::RPC::Database#command)
       #
       # @return (see Bones::RPC::Database#command)
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def command(op)
         current_database.command(op)
       end
@@ -59,7 +63,7 @@ module Bones
       #
       # @return [ true ] True if the disconnect succeeded.
       #
-      # @since 1.2.0
+      # @since 0.0.1
       def disconnect
         cluster.disconnect
       end
@@ -75,51 +79,56 @@ module Bones
       #
       # @return [ String ] The string inspection.
       #
-      # @since 1.4.0
+      # @since 0.0.1
       def inspect
         "<#{self.class.name} seeds=#{cluster.seeds}>"
       end
 
       # Setup validation of allowed read preference options.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:read).allow(
         :nearest
       )
 
-      # Setup validation of allowed database options. (Any string or symbol)
+      # Setup validation of allowed adapter options. (Any string or symbol)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:adapter).allow(Optionable.any(String), Optionable.any(Symbol), Optionable.any(Module))
+
+      # Setup validation of allowed backend options, (Any string or symbol)
+      #
+      # @since 0.0.1
+      option(:backend).allow(Optionable.any(String), Optionable.any(Symbol), Optionable.any(Module))
 
       # Setup validation of allowed max retry options. (Any integer)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:max_retries).allow(Optionable.any(Integer))
 
       # Setup validation of allowed pool size options. (Any integer)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:pool_size).allow(Optionable.any(Integer))
 
       # Setup validation of allowed retry interval options. (Any numeric)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:retry_interval).allow(Optionable.any(Numeric))
 
       # Setup validation of allowed reap interval options. (Any numeric)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:reap_interval).allow(Optionable.any(Numeric))
 
       # Setup validation of allowed ssl options. (Any boolean)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:ssl).allow(true, false)
 
       # Setup validation of allowed timeout options. (Any numeric)
       #
-      # @since 2.0.0
+      # @since 0.0.1
       option(:timeout).allow(Optionable.any(Numeric))
 
       # Initialize a new database session.
@@ -132,7 +141,7 @@ module Bones
       #
       # @see Above options validations for allowed values in the options hash.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def initialize(seeds, options = {}, &callback)
         validate_strict(options)
         @options = options
@@ -152,7 +161,7 @@ module Bones
       #
       # @return [ Object ] The read preference.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def read_preference
         @read_preference ||= ReadPreference.get(options[:read] || :nearest)
       end
@@ -176,7 +185,7 @@ module Bones
         #
         # @return [ Session ] The new session.
         #
-        # @since 3.0.0
+        # @since 0.0.1
         def connect(uri, &block)
           uri = Uri.new(uri)
           session = new(*uri.bones_rpc_arguments, &block)

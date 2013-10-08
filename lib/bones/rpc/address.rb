@@ -1,10 +1,12 @@
 # encoding: utf-8
+require 'bones/rpc/dns_resolver'
+
 module Bones
   module RPC
 
     # Encapsulates behaviour around addresses and resolving dns.
     #
-    # @since 2.0.0
+    # @since 0.0.1
     class Address
 
       # @!attribute host
@@ -26,7 +28,7 @@ module Bones
       #
       # @param [ String ] address The host:port pair as a string.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def initialize(address, port = nil)
         if address.is_a?(Bones::RPC::Address)
           @host     = address.host
@@ -97,7 +99,7 @@ module Bones
       #
       # @return [ String ] The resolved address.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def resolve(node)
         begin
           resolve! unless valid?
@@ -151,7 +153,7 @@ module Bones
 
         # Guess it's not an IP address, so let's try DNS
         unless @ip
-          addrs = Array(::Celluloid::IO::DNSResolver.new.resolve(@host))
+          addrs = Array(::Bones::RPC::DNSResolver.new.resolve(@host))
           raise Resolv::ResolvError, "DNS result has no information for #{@host}" if addrs.empty?
 
           # Pseudorandom round-robin DNS support :/

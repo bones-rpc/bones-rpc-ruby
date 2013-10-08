@@ -7,14 +7,14 @@ module Bones
 
     # Provides behaviour around getting various read preference implementations.
     #
-    # @since 2.0.0
+    # @since 0.0.1
     module ReadPreference
       extend self
 
       # Hash lookup for the read preference classes based off the symbols
       # provided in configuration.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       PREFERENCES = {
         nearest: Nearest
       }.freeze
@@ -34,7 +34,7 @@ module Bones
       #
       # @return [ Object ] The appropriate read preference.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def get(name, tags = nil)
         PREFERENCES.fetch(name.to_sym).new(tags)
       end

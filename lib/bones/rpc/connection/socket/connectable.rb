@@ -14,7 +14,7 @@ module Bones
           #
           # @return [ true, false ] If the socket is alive.
           #
-          # @since 1.0.0
+          # @since 0.0.1
           def alive?
             io = to_io
             if Kernel::select([ io ], nil, [ io ], 0)
@@ -33,7 +33,7 @@ module Bones
           #
           # @param [ Class ] klass The class including the module.
           #
-          # @since 1.3.0
+          # @since 0.0.1
           def self.included(klass)
             klass.send(:extend, ClassMethods)
           end
@@ -45,7 +45,7 @@ module Bones
           #
           # @return [ Object ] The data.
           #
-          # @since 1.2.0
+          # @since 0.0.1
           def read(size = nil, buf = nil)
             check_if_alive!
             handle_socket_errors { super }
@@ -58,7 +58,7 @@ module Bones
           #
           # @return [ Object ] The data.
           #
-          # @since 1.2.0
+          # @since 0.0.1
           def readpartial(maxlen, buf = nil)
             check_if_alive!
             handle_socket_errors { super }
@@ -68,9 +68,13 @@ module Bones
           #
           # @param [ String ] string The encoding.
           #
-          # @since 1.3.0
+          # @since 0.0.1
           def set_encoding(string)
-            to_io.set_encoding(string)
+            if to_io != self
+              to_io.set_encoding(string)
+            else
+              super
+            end
           end
 
           # Write to the socket.
@@ -82,7 +86,7 @@ module Bones
           #
           # @return [ Integer ] The number of bytes written.
           #
-          # @since 1.0.0
+          # @since 0.0.1
           def write(*args)
             check_if_alive!
             handle_socket_errors { super }
@@ -100,7 +104,7 @@ module Bones
           #
           # @raise [ ConnectionFailure ] If the connectable is not alive.
           #
-          # @since 1.4.0
+          # @since 0.0.1
           def check_if_alive!
             unless alive?
               raise Errors::ConnectionFailure, "Socket connection was closed by remote host"
@@ -119,7 +123,7 @@ module Bones
           #
           # @return [ String ] The error message.
           #
-          # @since 1.4.0
+          # @since 0.0.1
           def generate_message(error)
             "#{host}:#{port}: #{error.class.name} (#{error.errno}): #{error.message}"
           end
@@ -140,7 +144,7 @@ module Bones
           #
           # @return [ Object ] The result of the yield.
           #
-          # @since 1.0.0
+          # @since 0.0.1
           def handle_socket_errors
             yield
           rescue Errno::ECONNREFUSED => e
@@ -172,7 +176,7 @@ module Bones
             #
             # @return [ TCPSocket ] The socket.
             #
-            # @since 1.0.0
+            # @since 0.0.1
             def connect(host, port, timeout)
               begin
                 Timeout::timeout(timeout) do

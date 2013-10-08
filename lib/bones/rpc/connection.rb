@@ -1,22 +1,28 @@
 # encoding: utf-8
-require 'bones/rpc/connection/reader'
 require 'bones/rpc/connection/socket'
-require 'bones/rpc/connection/writer'
 
 module Bones
   module RPC
 
     # This class contains behaviour of Bones::RPC socket connections.
     #
-    # @since 2.0.0
+    # @since 0.0.1
     class Connection
 
       # The default connection timeout, in seconds.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       TIMEOUT = 5
 
       attr_reader :node, :socket
+
+      def self.writer_class(klass = nil)
+        if klass.nil?
+          @writer_class
+        else
+          @writer_class = klass
+        end
+      end
 
       # Is the connection alive?
       #
@@ -25,7 +31,7 @@ module Bones
       #
       # @return [ true, false ] If the connection is alive.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def alive?
         connected? ? @socket.alive? : false
       end
@@ -45,16 +51,16 @@ module Bones
       #
       # @return [ TCPSocket ] The socket.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def connect
         if @writer
           @writer.terminate
           @writer = nil
         end
         @socket = if !!options[:ssl]
-          Socket::SSL.connect(host, port, timeout)
+          self.class::Socket::SSL.connect(host, port, timeout)
         else
-          Socket::TCP.connect(host, port, timeout)
+          self.class::Socket::TCP.connect(host, port, timeout)
         end
         writer
         return true
@@ -67,7 +73,7 @@ module Bones
       #
       # @return [ true, false ] If the connection is connected.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def connected?
         !!@socket
       end
@@ -79,7 +85,7 @@ module Bones
       #
       # @return [ nil ] nil.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def disconnect
         @socket.close
       rescue
@@ -113,9 +119,7 @@ module Bones
       end
 
       def write(operations)
-        with_connection do |socket|
-          writer.write(operations)
-        end
+        raise NotImplementedError, "Connection#write not implemented for this backend"
       end
 
       private
@@ -132,14 +136,14 @@ module Bones
       #
       # @return The yielded block
       #
-      # @since 1.3.0
-      def with_connection
+      # @since 0.0.1
+      def with_connection(&block)
         connect if @socket.nil? || !@socket.alive?
-        yield @socket
+        block.call(@socket)
       end
 
       def writer
-        @writer ||= Writer.new(self, @socket, node.adapter)
+        @writer ||= self.class.writer_class.new(self, @socket, node.adapter)
       end
     end
   end

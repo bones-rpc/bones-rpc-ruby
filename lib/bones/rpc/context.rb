@@ -5,7 +5,7 @@ module Bones
     # The class for interacting with a MongoDB database. One only interacts with
     # this class indirectly through a session.
     #
-    # @since 1.0.0
+    # @since 0.0.1
     class Context
       include Readable
 
@@ -21,7 +21,7 @@ module Bones
       # @param [ Session ] session The session.
       # @param [ String, Symbol ] name The name of the database.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def initialize(session)
         @session = session
       end

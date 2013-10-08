@@ -7,22 +7,22 @@ module Bones
     # The cluster represents a cluster of MongoDB server nodes, either a single
     # node, a replica set, or a mongos server.
     #
-    # @since 1.0.0
+    # @since 0.0.1
     class Cluster
 
       # The default interval that a node would be flagged as "down".
       #
-      # @since 2.0.0
+      # @since 0.0.1
       DOWN_INTERVAL = 30
 
       # The default interval that a node should be refreshed in.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       REFRESH_INTERVAL = 300
 
       # The default time to wait to retry an operation.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       RETRY_INTERVAL = 0.25
 
       # @!attribute options
@@ -39,7 +39,7 @@ module Bones
       #
       # @return [ true ] True if the disconnect succeeded.
       #
-      # @since 1.2.0
+      # @since 0.0.1
       def disconnect
         nodes.each { |node| node.disconnect } and true
       end
@@ -52,7 +52,7 @@ module Bones
       #
       # @return [ Integer ] The down interval.
       #
-      # @since 1.2.7
+      # @since 0.0.1
       def down_interval
         @down_interval ||= options[:down_interval] || DOWN_INTERVAL
       end
@@ -75,10 +75,10 @@ module Bones
       # @option options [ Integer ] :timeout The time in seconds to wait for an
       #   operation to timeout. (5)
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def initialize(session, hosts)
         @session = session
-        @seeds = hosts.map { |host| Node.new(self, Address.new(host)) }
+        @seeds = hosts.map { |host| session.backend.node_class.new(self, Address.new(host)) }
         @peers = []
       end
 
@@ -89,7 +89,7 @@ module Bones
       #
       # @return [ String ] A nicely formatted string.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def inspect
         "#<#{self.class.name}:#{object_id} @seeds=#{seeds.inspect}>"
       end
@@ -102,7 +102,7 @@ module Bones
       #
       # @return [ Integer ] The max retries.
       #
-      # @since 1.2.7
+      # @since 0.0.1
       def max_retries
         @max_retries ||= options[:max_retries] || seeds.size
       end
@@ -116,7 +116,7 @@ module Bones
       #
       # @return [ Array<Node> ] the list of available nodes.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def nodes
         # Find the nodes that were down but are ready to be refreshed, or those
         # with stale connection information.
@@ -153,7 +153,7 @@ module Bones
       #
       # @return [ Array<Node> ] the available nodes
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def refresh(nodes_to_refresh = seeds)
         refreshed_nodes = []
         seen = {}
@@ -184,7 +184,7 @@ module Bones
       #
       # @return [ Integer ] The refresh interval.
       #
-      # @since 1.2.7
+      # @since 0.0.1
       def refresh_interval
         @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
       end
@@ -197,7 +197,7 @@ module Bones
       #
       # @return [ Integer ] The retry interval.
       #
-      # @since 1.2.7
+      # @since 0.0.1
       def retry_interval
         @retry_interval ||= options[:retry_interval] || RETRY_INTERVAL
       end
@@ -213,7 +213,7 @@ module Bones
       #
       # @return [ Time ] The down boundary.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def down_boundary
         Time.new - down_interval
       end
@@ -227,7 +227,7 @@ module Bones
       #
       # @return [ Time ] The refresh boundary.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def refresh_boundary
         Time.new - refresh_interval
       end
@@ -243,7 +243,7 @@ module Bones
       #
       # @param [ Node ] node The Node to check.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def refreshable?(node)
         node.down? ? node.down_at < down_boundary : node.needs_refresh?(refresh_boundary)
       end
@@ -257,7 +257,7 @@ module Bones
       #
       # @return [ Cluster ] The cloned cluster.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def initialize_copy(_)
         @seeds = seeds.map(&:dup)
       end

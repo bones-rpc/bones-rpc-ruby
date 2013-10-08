@@ -6,7 +6,7 @@ module Bones
       # Retry is for the case when we get exceptions around the connection, and
       # want to make another attempt to try and resolve the issue.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       module Retry
         extend self
 
@@ -23,7 +23,7 @@ module Bones
         #
         # @return [ Object ] The result of the block yield.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def execute(exception, node)
           node.disconnect
           begin

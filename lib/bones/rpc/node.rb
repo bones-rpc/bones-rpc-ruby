@@ -2,7 +2,6 @@
 require 'bones/rpc/address'
 require 'bones/rpc/connection'
 require 'bones/rpc/failover'
-require 'bones/rpc/future'
 require 'bones/rpc/instrumentable'
 require 'bones/rpc/node/registry'
 
@@ -11,9 +10,8 @@ module Bones
 
     # Represents a client to a node in a server cluster.
     #
-    # @since 1.0.0
+    # @since 0.0.1
     class Node
-      include Celluloid
       include Instrumentable
 
       # @!attribute address
@@ -37,15 +35,15 @@ module Bones
       #
       # @return [ true, false ] If the addresses are equal.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def ==(other)
         return false unless other.is_a?(Node)
-        id == other.id
+        address.resolved == other.address.resolved
       end
       alias :eql? :==
 
       def adapter
-        @adapter ||= Adapter.get(options[:adapter] || :msgpack)
+        @adapter ||= Adapter.get(options[:adapter] || :json)
       end
 
       def attach(channel, id, future)
@@ -65,10 +63,10 @@ module Bones
       #
       # @return [ true ] If the connection suceeded.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def connect
         start = Time.now
-        @connection.connect
+        connection { |conn| conn.connect }
         @latency = Time.now - start
         @down_at = nil
         true
@@ -81,9 +79,17 @@ module Bones
       #
       # @return [ true, false ] If the node is connected or not.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def connected?
-        @connection.alive?
+        connection { |conn| conn.alive? }
+      end
+
+      def connection
+        if block_given?
+          yield @connection
+        else
+          @connection
+        end
       end
 
       def detach(channel, id)
@@ -97,9 +103,9 @@ module Bones
       #
       # @return [ true ] If the disconnection succeeded.
       #
-      # @since 1.2.0
+      # @since 0.0.1
       def disconnect
-        @connection.disconnect
+        connection { |conn| conn.disconnect }
         true
       end
 
@@ -110,7 +116,7 @@ module Bones
       #
       # @return [ Time, nil ] The time the node went down, or nil if up.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def down?
         !!@down_at
       end
@@ -122,7 +128,7 @@ module Bones
       #
       # @return [ nil ] Nothing.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def down
         @down_at = Time.new
         @latency = nil
@@ -141,7 +147,7 @@ module Bones
       #
       # @return [ nil ] nil.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def ensure_connected(&block)
         begin
           connect unless connected?
@@ -162,7 +168,7 @@ module Bones
       def initialize(cluster, address)
         @cluster = cluster
         @address = address
-        @connection = Connection.new(current_actor)
+        @connection = cluster.session.backend.connection_class.new(current_actor)
         @down_at = nil
         @refreshed_at = nil
         @latency = nil
@@ -170,7 +176,7 @@ module Bones
         @registry = Node::Registry.new
         @request_id = 0
         @synack_id = 0
-        @address.resolve(self)
+        @address.resolve(current_actor)
       end
 
       # Get the node as a nice formatted string.
@@ -180,7 +186,7 @@ module Bones
       #
       # @return [ String ] The string inspection.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def inspect
         "<#{self.class.name} resolved_address=#{address.resolved.inspect}>"
       end
@@ -194,7 +200,7 @@ module Bones
       #
       # @return [ true, false] Whether the node needs to be refreshed.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def needs_refresh?(time)
         !refreshed_at || refreshed_at < time
       end
@@ -220,7 +226,7 @@ module Bones
       #
       # @return [ nil ] nil.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def refresh
         if address.resolve(self)
           begin
@@ -234,6 +240,10 @@ module Bones
             down
           end
         end
+      end
+
+      def registry_empty?
+        @registry.empty?
       end
 
       def request(method, params)
@@ -251,7 +261,7 @@ module Bones
       #
       # @return [ Integer ] The configured timeout or the default of 5.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def timeout
         @timeout ||= (options[:timeout] || 5)
       end
@@ -271,7 +281,7 @@ module Bones
       #
       # @return [ Object ] The result of the yield.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def logging(message)
         instrument(TOPIC, prefix: "  BONES-RPC: #{address.resolved}", ops: [message]) do
           yield if block_given?
@@ -297,7 +307,7 @@ module Bones
       def process(message, future = nil)
         logging(message) do
           ensure_connected do
-            @connection.write([[message, future]])
+            connection { |conn| conn.write([[message, future]]) }
           end
         end
         return future
@@ -306,7 +316,7 @@ module Bones
       end
 
       def with_future(message)
-        process(message, Future.new)
+        process(message, cluster.session.backend.future_class.new)
       end
 
       def without_future(message)

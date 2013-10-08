@@ -9,13 +9,13 @@ module Bones
     # Provides behaviour around failover scenarios for different types of
     # exceptions that get raised on connection and execution of operations.
     #
-    # @since 2.0.0
+    # @since 0.0.1
     module Failover
       extend self
 
       # Hash lookup for the failover classes based off the exception type.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       STRATEGIES = {
         Errors::ConnectionFailure => Retry
       }.freeze
@@ -29,7 +29,7 @@ module Bones
       #
       # @return [ Object ] The failover handler.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def get(exception)
         STRATEGIES.fetch(exception.class, Disconnect)
       end

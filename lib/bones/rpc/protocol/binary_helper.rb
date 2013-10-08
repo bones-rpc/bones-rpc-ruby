@@ -39,7 +39,7 @@ module Bones
         #
         # @return [ nil ] nil.
         #
-        # @since 1.0.0
+        # @since 0.0.1
         def receive_replies(connection); end
 
         # Serializes the message and all of its fields to a new buffer or to the
@@ -52,7 +52,7 @@ module Bones
         #
         # @return [ String ] The result of serliazing this message
         #
-        # @since 1.0.0
+        # @since 0.0.1
         def serialize(buffer = "", adapter = nil)
           raise NotImplementedError, "This method is generated after calling #finalize on a message class"
         end

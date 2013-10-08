@@ -21,6 +21,9 @@ module Bones
       # Raised when an Adapter is invalid.
       class InvalidAdapter < StandardError; end
 
+      # Raised when an Backend is invalid.
+      class InvalidBackend < StandardError; end
+
       # Raised when a Bones::RPC URI is invalid.
       class InvalidBonesRPCURI < StandardError; end
 

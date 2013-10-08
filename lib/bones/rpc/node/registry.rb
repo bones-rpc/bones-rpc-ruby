@@ -8,6 +8,10 @@ module Bones
           @registry = {}
         end
 
+        def empty?
+          @registry.empty? || @registry.all? { |channel, child| child.empty? }
+        end
+
         def flush(exception = Errors::ConnectionFailure.new("Socket closed"))
           return true if @registry.empty?
           @registry.each do |channel, futures|

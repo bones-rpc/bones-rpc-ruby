@@ -5,7 +5,7 @@ module Bones
 
       # Encapsulates behaviour around a nearest read preference.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       class Nearest
         include Selectable
 
@@ -16,7 +16,7 @@ module Bones
         #
         # @return [ Symbol ] :nearest.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def name
           :nearest
         end
@@ -40,7 +40,7 @@ module Bones
         #
         # @return [ Object ] The result of the block.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def with_node(cluster, &block)
           with_retry(cluster) do
             nearest = cluster.nodes.sort_by(&:latency).first

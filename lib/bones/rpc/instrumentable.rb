@@ -8,12 +8,12 @@ module Bones
 
       # The name of the topic of operations for Bones::RPC.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       TOPIC = "bones-rpc.operations"
 
       # Topic for warning instrumentation.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       WARN = "bones-rpc.warn"
 
       # @!attribute instrumenter
@@ -32,7 +32,7 @@ module Bones
       #
       # @return [ Object ] The result of the yield.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def instrument(name, payload = {}, &block)
         instrumenter.instrument(name, payload, &block)
       end

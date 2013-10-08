@@ -4,52 +4,52 @@ module Bones
 
     # Parses Bones::RPC uri
     #
-    # @since 1.3.0
+    # @since 0.0.1
     class Uri
 
       # Get the scheme pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       SCHEME = /(bones-rpc:\/\/)/
 
       # The user name pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       USER = /([-.\w:]+)/
 
       # The password pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       PASS = /([^@,]+)/
 
       # The nodes pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       NODES = /((([-.\w]+)(?::(\w+))?,?)+)/
 
       # The database pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       DATABASE = /(?:\/([-\w]+))?/
 
       # The options pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       OPTIONS  = /(?:\?(.+))/
 
       # The full URI pattern.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       URI = /#{SCHEME}(#{USER}:#{PASS}@)?#{NODES}#{DATABASE}#{OPTIONS}?/
 
       # The options that have to do with write concerns.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       WRITE_OPTIONS = [ "w", "j", "fsync", "wtimeout" ].freeze
 
       # The mappings from read preferences in the URI to Bones::RPC's.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       READ_MAPPINGS = {
         "nearest" => :nearest,
         "primary" => :primary,
@@ -69,7 +69,7 @@ module Bones
       #
       # @return [ true, false ] If authorization is provided.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def auth_provided?
         !username.nil? && !password.nil?
       end
@@ -81,7 +81,7 @@ module Bones
       #
       # @return [ String ] The database.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def database
         @database ||= match[9]
       end
@@ -93,7 +93,7 @@ module Bones
       #
       # @return [ Array<String> ] The hosts.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def hosts
         @hosts ||= match[5].split(",")
       end
@@ -105,7 +105,7 @@ module Bones
       #
       # @param [ String ] string The uri string.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def initialize(string)
         @match = string.match(URI)
         invalid_uri!(string) unless @match
@@ -118,7 +118,7 @@ module Bones
       #
       # @param [ String ] Invalid string
       #
-      # @since 1.3.1
+      # @since 0.0.1
       def invalid_uri!(string)
         scrubbed = string.gsub(/[^:]+@/, '<password>@')
         raise Errors::InvalidBonesRPCURI, "The provided connection string is not a value URI: #{scrubbed}"
@@ -134,7 +134,7 @@ module Bones
       #
       # @return [ Hash ] Options hash usable by Moped
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def options
         options_string, options = match[10], {}
         unless options_string.nil?
@@ -159,7 +159,7 @@ module Bones
       #
       # @return [ String ] The password.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def password
         @password ||= match[4]
       end
@@ -171,7 +171,7 @@ module Bones
       #
       # @return [ Hash ] The uri as options.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def to_hash
         config = { database: database, hosts: hosts }
         if username && password
@@ -187,7 +187,7 @@ module Bones
       #
       # @return [ Array ] Array of arguments usable by bones_rpc
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def bones_rpc_arguments
         [ hosts, options ]
       end
@@ -199,7 +199,7 @@ module Bones
       #
       # @return [ String ] The username.
       #
-      # @since 1.3.0
+      # @since 0.0.1
       def username
         @username ||= match[3]
       end

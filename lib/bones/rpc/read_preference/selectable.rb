@@ -6,7 +6,7 @@ module Bones
       # Provides the shared behaviour for read preferences that can filter by a
       # tag set or add query options.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       module Selectable
 
         # @!attribute tags
@@ -20,7 +20,7 @@ module Bones
         #
         # @param [ Array<Hash> ] tags The tag sets.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def initialize(tags = nil)
           @tags = tags
         end
@@ -34,7 +34,7 @@ module Bones
         #
         # @return [ Hash ] The options plus additional query options.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def query_options(options)
           options[:flags] ||= []
           options[:flags] |= [ :slave_ok ]
@@ -60,7 +60,7 @@ module Bones
         #
         # @return [ Object ] The result of the block.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def with_retry(cluster, retries = cluster.max_retries, &block)
           begin
             block.call

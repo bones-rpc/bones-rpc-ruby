@@ -4,7 +4,7 @@ module Bones
 
     # Contains behaviour for logging.
     #
-    # @since 1.0.0
+    # @since 0.0.1
     module Loggable
 
       # Log the provided operations.
@@ -16,7 +16,7 @@ module Bones
       # @param [ Array ] ops The operations.
       # @param [ String ] runtime The runtime in formatted ms.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def self.log_operations(prefix, ops, runtime)
         indent  = " "*prefix.length
         if ops.length == 1
@@ -38,7 +38,7 @@ module Bones
       # @param [ String ] payload The log operations.
       # @param [ String ] runtime The runtime in formatted ms.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def self.debug(prefix, payload, runtime)
         Bones::RPC.logger.debug([ prefix, payload, "runtime: #{runtime}" ].join(' '))
       end
@@ -52,7 +52,7 @@ module Bones
       # @param [ String ] payload The log operations.
       # @param [ String ] runtime The runtime in formatted ms.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def self.warn(prefix, payload, runtime)
         Bones::RPC.logger.warn([ prefix, payload, "runtime: #{runtime}" ].join(' '))
       end
@@ -64,7 +64,7 @@ module Bones
       #
       # @return [ Logger ] The logger.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def logger
         return @logger if defined?(@logger)
         @logger = rails_logger || default_logger
@@ -77,7 +77,7 @@ module Bones
       #
       # @return [ Logger ] The Rails logger.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def rails_logger
         defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
       end
@@ -89,7 +89,7 @@ module Bones
       #
       # @return [ Logger ] The default logger.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def default_logger
         logger = Logger.new(STDOUT)
         logger.level = Logger::INFO
@@ -103,7 +103,7 @@ module Bones
       #
       # @return [ Logger ] The logger.
       #
-      # @since 1.0.0
+      # @since 0.0.1
       def logger=(logger)
         @logger = logger
       end

@@ -41,9 +41,5 @@ module Bones
 end
 
 require 'bones/rpc/adapter/parser'
-
 require 'bones/rpc/adapter/base'
-
-require 'bones/rpc/adapter/erlang'
 require 'bones/rpc/adapter/json'
-require 'bones/rpc/adapter/msgpack'

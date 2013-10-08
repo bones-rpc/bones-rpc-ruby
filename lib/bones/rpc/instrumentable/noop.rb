@@ -5,7 +5,7 @@ module Bones
 
       # Does not instrument anything, just yields.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       class Noop
 
         class << self
@@ -22,7 +22,7 @@ module Bones
           #
           # @return [ Object ] The result of the yield.
           #
-          # @since 2.0.0
+          # @since 0.0.1
           def instrument(name, payload = {})
             yield payload if block_given?
           end

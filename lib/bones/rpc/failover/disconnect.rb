@@ -6,7 +6,7 @@ module Bones
       # Disconnect is for the case when we get exceptions we do not know about,
       # and need to disconnect the node to cleanup the problem.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       module Disconnect
         extend self
 
@@ -22,7 +22,7 @@ module Bones
         #
         # @raise [ Errors::SocketError ] The extended exception that was thrown.
         #
-        # @since 2.0.0
+        # @since 0.0.1
         def execute(exception, node)
           node.disconnect
           raise(exception.extend(Errors::SocketError))

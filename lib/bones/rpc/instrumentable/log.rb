@@ -6,7 +6,7 @@ module Bones
       # Provides logging instrumentation for compatibility with active support
       # notifications.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       class Log
 
         class << self
@@ -21,7 +21,7 @@ module Bones
           #
           # @return [ Object ] The result of the yield.
           #
-          # @since 2.0.0
+          # @since 0.0.1
           def instrument(name, payload = {})
             started = Time.new
             begin

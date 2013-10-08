@@ -4,7 +4,7 @@ module Bones
 
     # Provides behaviour around readable objects.
     #
-    # @since 2.0.0
+    # @since 0.0.1
     module Readable
 
       private
@@ -18,7 +18,7 @@ module Bones
       #
       # @return [ Cluster ] The cluster.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def cluster
         session.cluster
       end
@@ -32,7 +32,7 @@ module Bones
       #
       # @return [ Object ] The session's read preference.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def read_preference
         session.read_preference
       end
@@ -48,7 +48,7 @@ module Bones
       #
       # @return [ Hash ] The new query options.
       #
-      # @since 2.0.0
+      # @since 0.0.1
       def query_options(options = {})
         read_preference.query_options(options)
       end

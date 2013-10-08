@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.name          = "bones-rpc"
   spec.version       = Bones::RPC::VERSION
   spec.authors       = ["Andrew Bennett"]
-  spec.email         = ["andrew@delorum.com"]
+  spec.email         = ["andrew@pagodabox.com"]
   spec.description   = %q{Bones::RPC client for ruby}
   spec.summary       = %q{Bones::RPC client for ruby}
   spec.homepage      = ""
@@ -18,9 +18,6 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "celluloid-io", ">= 0.14.0"
-  spec.add_dependency "erlang-etf"
-  spec.add_dependency "msgpack"
   spec.add_dependency "optionable"
 
   spec.add_development_dependency "bundler", "~> 1.3"
