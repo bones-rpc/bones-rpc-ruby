@@ -31,29 +31,32 @@ module Bones
           if b.nil?
             raise EOFError
           elsif b.start_with?(EXT8)
+            pos = buffer.pos
             buffer.skip(1)
             len, = buffer.read(1).unpack('C')
             type, = buffer.read(1).unpack('C')
             check_ext!(type)
             head, = buffer.read(1).unpack('C')
             data = buffer.read(len-1)
-            parse_ext!(head, data)
+            parse_ext!(head, data, pos)
           elsif b.start_with?(EXT16)
+            pos = buffer.pos
             buffer.skip(1)
             len, = buffer.read(2).unpack('n')
             type, = buffer.read(1).unpack('C')
             check_ext!(type)
             head, = buffer.read(1).unpack('C')
             data = buffer.read(len-1)
-            parse_ext!(head, data)
+            parse_ext!(head, data, pos)
           elsif b.start_with?(EXT32)
+            pos = buffer.pos
             buffer.skip(1)
             len, = buffer.read(4).unpack('N')
             type, = buffer.read(1).unpack('C')
             check_ext!(type)
             head, = buffer.read(1).unpack('C')
             data = buffer.read(len-1)
-            parse_ext!(head, data)
+            parse_ext!(head, data, pos)
           else
             object = parser.read
             buffer.seek(parser.unpacker_pos)
@@ -88,12 +91,20 @@ module Bones
         end
       end
 
-      def parse_ext!(head, data)
+      def parse_ext!(head, data, pos)
         message = Protocol.get_by_ext_head(head)
         if message
           message.unpack(data)
         else
-          map_from!(Adapter.get_by_ext_head(head).unpack(data))
+          ext_adapter = Adapter.get_by_ext_head(head)
+          if ext_adapter == adapter
+            buffer.seek(pos)
+            object = parser.read
+            buffer.seek(parser.unpacker_pos)
+            map_from!(object)
+          else
+            raise(Errors::InvalidExtMessage, "bad ext adapter message received of type #{ext_adapter.inspect} (should be #{adapter.inspect})")
+          end
         end
       end
 

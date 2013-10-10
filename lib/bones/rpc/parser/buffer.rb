@@ -7,7 +7,11 @@ module Bones
         attr_reader :io
 
         def initialize(data)
-          @io = StringIO.new(data)
+          @io = data.is_a?(StringIO) ? data : StringIO.new(data)
+        end
+
+        def getbyte
+          io.getbyte
         end
 
         def getc
@@ -21,7 +25,7 @@ module Bones
         def read(n)
           i = pos
           data = io.read(n)
-          if data.bytesize < n
+          if data.nil? || data.bytesize < n
             seek(i)
             raise EOFError
           else

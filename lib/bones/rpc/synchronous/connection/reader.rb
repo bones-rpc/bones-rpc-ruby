@@ -20,7 +20,7 @@ module Bones
           def parse(data, proxy)
             @buffer << data
             if @buffer.empty?
-              read
+              read(proxy)
             else
               parser = Bones::RPC::Parser.new(@buffer, @adapter)
               begin
@@ -29,7 +29,7 @@ module Bones
                 @buffer.replace(parser.buffer.to_str)
               end
               return if @buffer.empty?
-              read
+              read(proxy)
             end
           end
 
